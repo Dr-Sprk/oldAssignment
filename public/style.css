@@ -1,0 +1,107 @@
+html, body {
+    height: 100%;
+	width: 100%;
+}
+
+#title {
+	font-size: 18px;
+}
+
+@font-face {
+	font-family: Sans;
+	src: url('https://fonts.gstatic.com/s/googlesans/v5/4UaGrENHsxJlGDuGo1OIlL3Owp5eKQtG.woff2')
+}
+
+@keyframes color_pulse_2-0 {
+	0% { background-color: rgba(9,35,61,0.75); }
+	25% { background-color: rgba(30,73,102,0.75); }
+	50% { background-color: rgba(5,74,76,0.75); }
+	75% { background-color: rgba(30,73,102,0.75); }
+	100% { background-color: rgba(9,35,61,0.75); }
+}
+
+html {
+	background-image: url(http://demos.inspirationalpixels.com/responsive-menu/body-bg.png);
+	display: table;
+    margin: auto;
+}
+
+body {
+	font-family: Sans, sans-serif;
+	color: #EAEAD6;
+	animation: color_pulse_2-0;
+	animation-duration: 45s;
+	animation-iteration-count: infinite;
+	text-align: center;
+}
+
+button {
+	font-family: Sans, sans-serif;
+	border-radius: 5px;
+	border: 1px solid white;
+}
+
+.allResponses {
+	background-color: #364652;
+	margin-top: 5%;
+	margin-left: 2%;
+	margin-right: 2%;
+	padding: 1%;
+	border-radius: 7px;
+	width: 96%;
+}
+
+/*pre {
+	text-align: left;
+	color: #EAEAD6;
+	width: 70%;
+}*/
+
+td {
+	padding: 1%;
+}
+
+table {
+	margin: auto;
+	width: 45%;
+}
+
+#page {
+	padding-top: 3%;
+	padding-bottom: 3%;
+}
+
+.row {
+	padding-top: 2%;
+	width: 95%;
+	margin-left: 2.5%;
+}
+
+input {
+	width: 77.5%;
+	margin-bottom: 3%;
+	border-radius: 4px;
+	border: 1px solid white;
+}
+
+#dataResponse {
+	text-align: left;
+	font-family: 'Anonymous Pro', monospace;
+	font-size: 1em;
+	color: #EAEAD6;
+}
+
+#listbutton {
+	display: flex;
+	align-items: center;
+}
+
+a {
+	color: orange;
+	text-decoration: underline;
+}
+
+a:hover {
+	color: #bc7710;
+}
+

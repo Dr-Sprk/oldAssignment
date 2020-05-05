@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+		<link href="https://fonts.googleapis.com/css?family=Anonymous+Pro" rel="stylesheet">
+		<link rel="stylesheet" type="text/css" href="style.css">
+		<title>JSON Tasks: To Do List</title>
+		<link rel="icon" href="checked.png">
+	</head>
+	<body>
+		<div id="page">
+			<h1>To Do List - JSON Tasks</h1>
+			<div class="row">
+				<div class="col-lg-2">
+					<button id="listButton" onclick="APIfetch()">List all tasks</button>
+				</div>
+				<div class="col-lg-4">
+					<input type="text" id="newId" placeholder="Please enter an ID for the new task"><br>
+					<input type="text" id="desc" placeholder="Please enter a description for the task"><br>
+					<input type="text" list="categories" id="category" placeholder="Please choose a category, or type in a new one!">
+					<datalist id="categories"></datalist>
+					<input type="date" id="date"><br>
+					<button onclick="createTask()" id="createButton">Create Task</button>
+				</div>
+				<div class="col-lg-4">
+					<input type="text" id="deletedId" placeholder="Please enter the ID of the task to delete"><br>
+					<button onclick="deleteTask()" id="deleteButton">Delete Task</button>
+				</div>
+				<div class="col-lg-2">
+					<button onclick="getTable()">Tabulate To Do List</button>
+				</div>
+			</div>
+			<div class="allResponses">
+				<p id="dataResponse"></p>
+				<br>
+				<table id='table'>
+					<thead>
+						<tr>
+							<th onclick="sortById();" id="idSorter">ID</th>
+							<th>Description</th>
+							<th onclick="sortByCategory();" id="categorySorter">Category</th>
+							<th onclick="sortByCreateDate();" id="createDateSorter">Date Created</th>
+							<th onclick="sortByDueDate();" id="dueDateSorter">Due Date</th>
+						</tr>
+					</thead>
+					<tbody id="tbody"></tbody>
+				</table>
+			</div>
+		</div>
+
+		<!-- This is my website JavaScript! -->
+		<script type="text/javascript">
+			var openTable = false;
+			var openRawResp = false;
+			var idSortDirection = "up";
+			var dueDateSortDirection = "up";
+			var createDateSortDirection = "up";
+			var categorySortDirection = "up";
+			var dataListObjs = [];
+			document.querySelector("#date").valueAsDate = new Date();
+			window.onload = dataList();
+
+			setInterval(() => {
+				if (openTable = true) {
+					document.getElementById('idSorter').setAttribute('style', 'cursor: pointer;');
+					document.getElementById('categorySorter').setAttribute('style', 'cursor: pointer;');
+					document.getElementById('createDateSorter').setAttribute('style', 'cursor: pointer;');
+					document.getElementById('dueDateSorter').setAttribute('style', 'cursor: pointer;');
+				}
+			}, 1000);
+
+			async function dataList() {
+				try {
+					let response = await fetch('/list');
+					let data = await response.json();
+					var list = document.getElementById('categories');
+					list.innerHTML = "";
+					for (var i = 0, l = data.length; i < l; i++) {
+					    if (!dataListObjs.includes(data[i].category)) {
+					      	dataListObjs.push(data[i].category);
+					    }
+					}
+					for (var i = 0, l = dataListObjs.length; i < l; i++) {
+						var option = document.createElement('option');
+						option.setAttribute("value", dataListObjs[i]);
+						list.append(option);
+					}
+				} catch (err) {
+					document.getElementById('dataResponse').innerHTML = err;
+				}
+			}
+
+			async function APIfetch() {
+				try {
+					let response = await fetch('/list');
+					let data = await response.json();
+					document.getElementById('dataResponse').innerHTML = JSON.stringify(data,null,2);
+					openRawResp = true;
+				} catch (err) {
+					document.getElementById('dataResponse').innerHTML = err;
+				}
+			}
+
+			//Initialises the ability to hit enter in a specific field so that it acts as a button click!
+			document.getElementById('category').addEventListener("keyup", function(event) {
+				if (event.keyCode === 13) {
+					document.getElementById("createButton").click();
+				}
+			});
+			document.getElementById('date').addEventListener("keyup", function(event) {
+				if (event.keyCode === 13) {
+					document.getElementById("createButton").click();
+				}
+			});
+			document.getElementById('deletedId').addEventListener("keyup", function(event) {
+				if (event.keyCode === 13) {
+					document.getElementById("deleteButton").click();
+				}
+			});
+
+			async function createTask() {
+				try {
+					var id = document.getElementById('newId').value;
+					var desc = document.getElementById('desc').value;
+					var category = document.getElementById('category').value;
+					var minDate = new Date().toISOString().slice(0, 10);
+					document.getElementById('date').setAttribute("min", minDate);
+					var createDate = new Date().toISOString().slice(0, 10);
+					var dueDate = document.getElementById('date').value;
+					let response = await fetch('/list');
+				 	let data = await response.json();
+				 	var okId = true;
+				 	for (var i = 0, l = data.length; i < l; i++) {
+				    	if (Number(data[i].id) == id) {
+				    		okId = false;
+				      		break;
+				    	}
+				  	}
+				  	if (isNaN(id)) {
+				    	document.getElementById("dataResponse").innerHTML = 'Please choose an integral ID (only integers are supported!)';
+				    	setTimeout(function () {
+							document.getElementById("dataResponse").innerHTML = JSON.stringify(data,null,2)
+						}, 3000);
+				  	} else if (okId == false) {
+				  		document.getElementById("dataResponse").innerHTML = 'Please choose a different ID as this one is already in use!';
+				  		setTimeout(function () {
+							document.getElementById("dataResponse").innerHTML = JSON.stringify(data,null,2)
+						}, 3000);
+				  	} else if (id == ""){
+				  		document.getElementById("dataResponse").innerHTML = 'Please enter an ID for the task!';
+				  		setTimeout(function () {
+							document.getElementById("dataResponse").innerHTML = JSON.stringify(data,null,2)
+						}, 3000);
+				  	} else if (desc == ""){
+				  		document.getElementById("dataResponse").innerHTML = 'Please enter a description for the task!';
+				  		setTimeout(function () {
+							document.getElementById("dataResponse").innerHTML = JSON.stringify(data,null,2)
+						}, 3000);
+				  	} else if (category == ""){
+				  		document.getElementById("dataResponse").innerHTML = 'Please enter a category for the task!';
+				  		setTimeout(function () {
+							document.getElementById("dataResponse").innerHTML = JSON.stringify(data,null,2)
+						}, 3000);
+				  	} else {
+						var obj = {};
+						obj.id = id;
+						obj.desc = desc;
+						obj.category = category;
+						obj.createDate = createDate;
+						obj.dueDate = dueDate;
+						document.getElementById('newId').value = "";
+						document.getElementById('desc').value = "";
+						document.getElementById('category').value = "";
+						document.querySelector("#date").valueAsDate = new Date();
+						await fetch('/add?id=' + id + '&desc=' + desc + '&category=' + category + '&createDate=' + createDate + '&dueDate=' + dueDate);
+						let response = await fetch('/list');
+				 		let data = await response.json();
+						document.getElementById("dataResponse").innerHTML = JSON.stringify(obj, null, 2);
+						setTimeout(function () {
+							document.getElementById("dataResponse").innerHTML = JSON.stringify(data, null, 2)
+						}, 5000);
+						if (openTable == true){ getTable(); }
+						dataList();
+					}
+				} catch (err) {
+					document.getElementById("dataResponse").innerHTML = err;
+				}
+			}
+
+			function reformatDate(dateStr) {
+				dArr = dateStr.split("-");  // ex input "2010-01-18"
+				return dArr[2]+ "/" +dArr[1]+ "/" +dArr[0].substring(2); //ex out: "18/01/10"
+			}
+
+			async function deleteTask() {
+				try {
+					var id = document.getElementById('deletedId').value;
+					var intId = Number(id);
+					document.getElementById('deletedId').value = "";
+					let response = await fetch('/list');
+					let data = await response.json();
+					var okId = false;
+				 	for (var i = 0, l = data.length; i < l; i++) {
+				    	if (Number(data[i].id) == id) {
+				    		okId = true;
+				      		break;
+				    	}
+				  	}
+					if (isNaN(intId)) {
+						document.getElementById("dataResponse").innerHTML = 'Please enter an integral ID!';
+						setTimeout(function () {
+							document.getElementById("dataResponse").innerHTML = JSON.stringify(data,null,2)
+						}, 3000);
+					} else if (okId == false) {
+						document.getElementById("dataResponse").innerHTML = 'Please enter an ID that exists!';
+						setTimeout(function () {
+							document.getElementById("dataResponse").innerHTML = JSON.stringify(data,null,2)
+						}, 3000);
+					} else {
+						await fetch('/delete/' + id);
+						let response = await fetch('/list');
+						let data = await response.json();
+						document.getElementById("dataResponse").innerHTML = JSON.stringify(data,null,2);
+						if (openTable == true) { getTable(); }
+						dataList();
+					}
+				} catch (err) {
+					document.getElementById("dataResponse").innerHTML = err;
+				}
+			}
+
+			async function deleteRow(r) {
+	            try {
+		            var id = r.parentNode.cells[0].innerHTML;
+		            await fetch('/delete/' + id);
+		            getTable();
+		            if (openRawResp == true) { APIfetch() };
+		           	dataList();
+		        } catch (err) {
+		        	document.getElementById("dataResponse").innerHTML = err;
+		        }
+        	}
+
+			async function initTable(data) {
+				try {
+					var tbody = document.getElementById('tbody');
+					tbody.innerHTML = "";
+					for (var i = 0, l = data.length; i < l; i++) {
+	    				var obj = data[i];
+	    				var rows = tbody.insertRow(i);
+	    				var idCell = rows.insertCell(0);
+	    				var descCell = rows.insertCell(1);
+	    				var categoryCell = rows.insertCell(2)
+	    				var createDateCell = rows.insertCell(3);
+	    				var dueDateCell = rows.insertCell(4);
+	    				var deleteCell = rows.insertCell(5);
+	    				idCell.innerHTML = obj.id;
+	    				descCell.innerHTML = obj.desc;
+	    				categoryCell.innerHTML = obj.category;
+	    				createDateCell.innerHTML = reformatDate(String(obj.createDate));
+	    				dueDateCell.innerHTML = reformatDate(String(obj.dueDate));
+	    				var curDate = new Date().toISOString().substr(0, 10);
+	    				var dueDate = new Date(obj.dueDate).toISOString().substr(0, 10);
+	    				console.log(dueDate);
+	    				console.log(curDate);
+	    				console.log(obj.dueDate < curDate);
+	    				if (obj.dueDate < curDate) {
+	    					dueDateCell.setAttribute("style", "color:red")
+	    				}
+	    				deleteCell.innerHTML = "<img src='delete.png' width='18'/>";
+	    				deleteCell.setAttribute("onclick", "deleteRow(this)");
+	    				deleteCell.setAttribute("style", "cursor: pointer;")
+					};
+				} catch (err) {
+					document.getElementById("dataResponse").innerHTML = err;
+				}
+			}
+
+			async function getTable() {
+				try {
+					let rawData = await fetch('/list');
+					let data = await rawData.json();
+					openTable = true;
+					initTable(data);
+				} catch (err) {
+					document.getElementById("dataResponse").innerHTML = err;
+				}
+			}
+
+			async function sortById() {
+				try	{
+					if (openTable == true) {
+						let rawData = await fetch('/list');
+						let data = await rawData.json();
+						if (idSortDirection == "up") {
+							data.sort((a, b) => a.id - b.id);
+							initTable(data);
+							idSortDirection = "down";
+							document.getElementById('idSorter').innerHTML = "ID &uarr;";
+							document.getElementById('dueDateSorter').innerHTML = "Due Date";
+							document.getElementById('createDateSorter').innerHTML = "Date Created";
+							document.getElementById('categorySorter').innerHTML = "Category";
+							createDateSortDirection = "up";
+							categorySortDirection = "up";
+							dueDateSortDirection = "up";
+						} else if (idSortDirection == "down") {
+							data.sort((a, b) => b.id - a.id);
+							initTable(data);
+							idSortDirection = "up";
+							document.getElementById('idSorter').innerHTML = "ID &darr;";
+						}
+					}
+				} catch (err) {
+					document.getElementById("dataResponse").innerHTML = err;
+				}
+			}
+
+			async function sortByDueDate() {
+				try	{
+					if (openTable == true) {
+						let rawData = await fetch('/list');
+						let data = await rawData.json();
+						if (dueDateSortDirection == "up") {
+							data.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+							initTable(data);
+							dueDateSortDirection = "down";
+							document.getElementById('dueDateSorter').innerHTML = "Due Date &uarr;";
+							document.getElementById('idSorter').innerHTML = "ID";
+							document.getElementById('createDateSorter').innerHTML = "Date Created";
+							document.getElementById('categorySorter').innerHTML = "Category";
+							idSortDirection = "up";
+							createDateSortDirection = "up";
+							categorySortDirection = "up";
+						} else if (dueDateSortDirection == "down") {
+							data.sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate));
+							initTable(data);
+							dueDateSortDirection = "up";
+							document.getElementById('dueDateSorter').innerHTML = "Due Date &darr;";
+						}
+					}
+				} catch (err) {
+					document.getElementById("dataResponse").innerHTML = err;
+				}
+			}
+
+			async function sortByCreateDate() {
+				try	{
+					if (openTable == true) {
+						let rawData = await fetch('/list');
+						let data = await rawData.json();
+						if (createDateSortDirection == "up") {
+							data.sort((a, b) => new Date(a.createDate) - new Date(b.createDate));
+							initTable(data);
+							createDateSortDirection = "down";
+							document.getElementById('createDateSorter').innerHTML = "Date Created &uarr;";
+							document.getElementById('idSorter').innerHTML = "ID";
+							document.getElementById('dueDateSorter').innerHTML = "Due Date";
+							document.getElementById('categorySorter').innerHTML = "Category";
+							idSortDirection = "up";
+							dueDateSortDirection = "up";
+							categorySortDirection = "up";
+						} else if (createDateSortDirection == "down") {
+							data.sort((a, b) => new Date(b.createDate) - new Date(a.createDate));
+							initTable(data);
+							createDateSortDirection = "up";
+							document.getElementById('createDateSorter').innerHTML = "Date Created &darr;";
+						}
+					}
+				} catch (err) {
+					document.getElementById("dataResponse").innerHTML = err;
+				}
+			}
+
+			async function sortByCategory() {
+				try	{
+					if (openTable == true) {
+						let rawData = await fetch('/list');
+						let data = await rawData.json();
+						if (categorySortDirection == "up") {
+							data.sort((a, b) => ((a.category == b.category) ? 0 : ((a.category > b.category) ? 1 : -1 )));
+							initTable(data);
+							categorySortDirection = "down";
+							document.getElementById('categorySorter').innerHTML = "Category &uarr;"
+							document.getElementById('createDateSorter').innerHTML = "Date Created";
+							document.getElementById('idSorter').innerHTML = "ID";
+							document.getElementById('dueDateSorter').innerHTML = "Due Date"
+							idSortDirection = "up";
+							dueDateSortDirection = "up";
+							createDateSortDirection = "up";
+						} else if (categorySortDirection == "down") {
+							data.sort((a, b) => ((a.category == b.category) ? 0 : ((b.category > a.category) ? 1 : -1 )));
+							initTable(data);
+							categorySortDirection = "up";
+							document.getElementById('categorySorter').innerHTML = "Category &darr;";
+						}
+					}
+				} catch (err) {
+					document.getElementById("dataResponse").innerHTML = err;
+				}
+			}
+		</script>
+	</body>
+</html>
